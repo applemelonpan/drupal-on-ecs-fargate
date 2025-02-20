@@ -454,11 +454,24 @@ Resources:
       StorageEncrypted: true
       VpcSecurityGroupIds:
         - !Ref DrupalDBSG
-      ScalingConfiguration:
-        AutoPause: true
+      ServerlessV2ScalingConfiguration:
         MinCapacity: !Ref MinimumAuroraCapacityUnit
         MaxCapacity: !Ref MaximumAuroraCapacityUnit
-        SecondsUntilAutoPause: 1000
+
+  AuroraServerlessV2Instance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref DrupalDB
+      DBInstanceClass: db.serverless
+      Engine: aurora-mysql
+
+  AuroraServerlessV2ReaderInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref DrupalDB
+      DBInstanceClass: db.serverless
+      Engine: aurora-mysql
+      PromotionTier: 15
 
   #EFS Resources
   EFSSecurityGroup:
