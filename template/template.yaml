@@ -448,7 +448,7 @@ Resources:
       DBClusterIdentifier: drupal-db-aurora-serverless
       DBSubnetGroupName: !Ref DrupalDBSubnetGroupName
       Engine: aurora-mysql
-      EngineMode: serverless
+      EngineMode: provisioned
       MasterUsername: !Ref DBAdminUsername
       MasterUserPassword: !Ref DBPassword
       StorageEncrypted: true
