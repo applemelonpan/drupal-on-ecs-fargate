@@ -1,11 +1,10 @@
 Description: Template to deploy Drupal application on EFS using ECS Fargate
-Metadata: 
-  AWS::CloudFormation::Interface: 
-    ParameterGroups: 
-      - 
-        Label: 
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
           default: "Network Configuration"
-        Parameters: 
+        Parameters:
           - VpcCIDR
           - PublicSubnet1CIDR
           - PublicSubnet2CIDR
@@ -13,44 +12,40 @@ Metadata:
           - PrivateSubnet1CIDR
           - PrivateSubnet2CIDR
           - PrivateSubnet3CIDR
-      - 
-        Label: 
+      - Label:
           default: "ECS cluster Configuration"
-        Parameters: 
+        Parameters:
           - ClusterName
           - Image
           - MinCapacity
           - MaxCapacity
-      - 
-        Label: 
+      - Label:
           default: "Amazon Aurora Serverless MySQL DB Configuration"
-        Parameters: 
+        Parameters:
           - DBAdminUsername
           - DBPassword
           - MinimumAuroraCapacityUnit
           - MaximumAuroraCapacityUnit
-      - 
-        Label: 
+      - Label:
           default: "EFS Configuration"
-        Parameters: 
+        Parameters:
           - PerformanceMode
           - EfsProvisionedThroughputInMibps
           - ThroughputMode
-      - 
-        Label:
+      - Label:
           default: "Tagging Configuration"
         Parameters:
           - EnvironmentName
 
 Parameters:
   ClusterName:
-    Type: String 
-    Description: Name for Aurora Cluster DB and EFS. 
+    Type: String
+    Description: Name for Aurora Cluster DB and EFS.
     Default: drupalonefs
   Image:
     Type: String
-    Default: "drupal:8-apache"
-    Description: Drupal Image for the ECS service. 
+    Default: "drupal:11-apache"
+    Description: Drupal Image for the ECS service.
   MinCapacity:
     Description: Minimum Fargate tasks to run
     Type: Number
@@ -66,38 +61,38 @@ Parameters:
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
     Type: String
-    Default: 10.192.0.0/16
+    Default: 172.34.0.0/16
   PublicSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
     Type: String
-    Default: 10.192.10.0/24
+    Default: 172.34.10.0/24
   PublicSubnet2CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
     Type: String
-    Default: 10.192.11.0/24
+    Default: 172.34.11.0/24
   PublicSubnet3CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
     Type: String
-    Default: 10.192.12.0/24
+    Default: 172.34.12.0/24
   PrivateSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
     Type: String
-    Default: 10.192.20.0/24
+    Default: 172.34.20.0/24
   PrivateSubnet2CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
     Type: String
-    Default: 10.192.21.0/24
+    Default: 172.34.21.0/24
   PrivateSubnet3CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
     Type: String
-    Default: 10.192.22.0/24
+    Default: 172.34.22.0/24
   DBAdminUsername:
-    Description: Please enter a username for the Aurora DB that will be created as part of this stack. 
+    Description: Please enter a username for the Aurora DB that will be created as part of this stack.
     Type: String
     Default: admin
   DBPassword:
     NoEcho: true
-    Description: Please enter a password for the Aurora DB that will be created as part of this stack. 
+    Description: Please enter a password for the Aurora DB that will be created as part of this stack.
     Type: String
     MinLength: 8
     MaxLength: 41
@@ -108,10 +103,10 @@ Parameters:
   MaximumAuroraCapacityUnit:
     Description: Maximum Aurora capacity unit
     Type: Number
-    Default: 16    
+    Default: 16
   PerformanceMode:
     Type: String
-    AllowedValues: [ generalPurpose, maxIO ]
+    AllowedValues: [generalPurpose, maxIO]
     Default: generalPurpose
   EfsProvisionedThroughputInMibps:
     Type: Number
@@ -120,72 +115,71 @@ Parameters:
     Default: 0
   ThroughputMode:
     Type: String
-    AllowedValues: [ bursting, provisioned ]
+    AllowedValues: [bursting, provisioned]
     Default: bursting
 Rules:
   ProvisionedThroughput:
-    RuleCondition: !Equals [ !Ref ThroughputMode, provisioned ]
+    RuleCondition: !Equals [!Ref ThroughputMode, provisioned]
     Assertions:
-      - Assert: !Not [ !Equals [ '0', !Ref EfsProvisionedThroughputInMibps ] ]
+      - Assert: !Not [!Equals ["0", !Ref EfsProvisionedThroughputInMibps]]
         AssertDescription: "EfsProvisionedThroughputInMibps must be greater than 0 when ThroughputMode is provisioned"
   BurstingThroughput:
-    RuleCondition: !Equals [ !Ref ThroughputMode, bursting ]
+    RuleCondition: !Equals [!Ref ThroughputMode, bursting]
     Assertions:
-      - Assert:  !Equals [ '0', !Ref EfsProvisionedThroughputInMibps ]
+      - Assert: !Equals ["0", !Ref EfsProvisionedThroughputInMibps]
         AssertDescription: "EfsProvisionedThroughputInMibps must be 0 when ThroughputMode is bursting"
 Conditions:
-  IsProvisioned:
-    !Equals [ !Ref ThroughputMode, provisioned ]
+  IsProvisioned: !Equals [!Ref ThroughputMode, provisioned]
 
 Mappings:
   RegionMap:
     us-east-1:
-      "elbAcc" : "127311923021"
+      "elbAcc": "127311923021"
     us-east-2:
-      "elbAcc" : "033677994240"
+      "elbAcc": "033677994240"
     us-west-1:
-      "elbAcc" : "027434742980"
+      "elbAcc": "027434742980"
     us-west-2:
-      "elbAcc" : "797873946194"
+      "elbAcc": "797873946194"
     af-south-1:
-      "elbAcc" : "098369216593"
+      "elbAcc": "098369216593"
     ca-central-1:
-      "elbAcc" : "985666609251"
+      "elbAcc": "985666609251"
     eu-central-1:
-      "elbAcc" : "054676820928"
+      "elbAcc": "054676820928"
     eu-west-1:
-      "elbAcc" : "156460612806"
+      "elbAcc": "156460612806"
     eu-west-2:
-      "elbAcc" : "652711504416"
+      "elbAcc": "652711504416"
     eu-south-1:
-      "elbAcc" : "635631232127"
+      "elbAcc": "635631232127"
     eu-west-3:
-      "elbAcc" : "009996457667"
+      "elbAcc": "009996457667"
     eu-north-1:
-      "elbAcc" : "897822967062"
+      "elbAcc": "897822967062"
     ap-east-1:
-      "elbAcc" : "754344448648"
+      "elbAcc": "754344448648"
     ap-northeast-1:
-      "elbAcc" : "582318560864"
+      "elbAcc": "582318560864"
     ap-northeast-2:
-      "elbAcc" : "600734575887"
+      "elbAcc": "600734575887"
     ap-northeast-3:
-      "elbAcc" : "383597477331"
+      "elbAcc": "383597477331"
     ap-southeast-1:
-      "elbAcc" : "114774131450"
+      "elbAcc": "114774131450"
     ap-southeast-2:
-      "elbAcc" : "783225319266"
+      "elbAcc": "783225319266"
     ap-south-1:
-      "elbAcc" : "718504428378"
+      "elbAcc": "718504428378"
     me-south-1:
-      "elbAcc" : "076674570225"
+      "elbAcc": "076674570225"
     sa-east-1:
-      "elbAcc" : "507241528517"
+      "elbAcc": "507241528517"
     us-gov-west-1:
-      "elbAcc" : "048591011584"
+      "elbAcc": "048591011584"
     us-gov-east-1:
-      "elbAcc" : "190560391635"
-  
+      "elbAcc": "190560391635"
+
 Resources:
   #VPC resources
   VPC:
@@ -200,7 +194,8 @@ Resources:
   vpcFlowLog:
     Type: AWS::EC2::FlowLog
     Properties:
-      LogDestination: !Join ['/',[!GetAtt loadbalancerLogBucket.Arn,vpcflowlogs]]
+      LogDestination:
+        !Join ["/", [!GetAtt loadbalancerLogBucket.Arn, vpcflowlogs]]
       LogDestinationType: s3
       ResourceId: !Ref VPC
       ResourceType: VPC
@@ -222,7 +217,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: !Ref PublicSubnet1CIDR
       MapPublicIpOnLaunch: false
       Tags:
@@ -233,18 +228,18 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      AvailabilityZone: !Select [1, !GetAZs ""]
       CidrBlock: !Ref PublicSubnet2CIDR
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
-  
+
   PublicSubnet3:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Select [ 2, !GetAZs  '' ]
+      AvailabilityZone: !Select [2, !GetAZs ""]
       CidrBlock: !Ref PublicSubnet3CIDR
       MapPublicIpOnLaunch: false
       Tags:
@@ -255,7 +250,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: !Ref PrivateSubnet1CIDR
       MapPublicIpOnLaunch: false
       Tags:
@@ -266,7 +261,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      AvailabilityZone: !Select [1, !GetAZs ""]
       CidrBlock: !Ref PrivateSubnet2CIDR
       MapPublicIpOnLaunch: false
       Tags:
@@ -277,13 +272,12 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Select [ 2, !GetAZs  '' ]
+      AvailabilityZone: !Select [2, !GetAZs ""]
       CidrBlock: !Ref PrivateSubnet3CIDR
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} Private Subnet (AZ3)
-
 
   NatGateway1EIP:
     Type: AWS::EC2::EIP
@@ -296,7 +290,7 @@ Resources:
     DependsOn: InternetGatewayAttachment
     Properties:
       Domain: vpc
-  
+
   NatGateway3EIP:
     Type: AWS::EC2::EIP
     DependsOn: InternetGatewayAttachment
@@ -355,7 +349,6 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet3
 
-
   PrivateRouteTable1:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -397,7 +390,7 @@ Resources:
     Properties:
       RouteTableId: !Ref PrivateRouteTable2
       SubnetId: !Ref PrivateSubnet2
-  
+
   PrivateRouteTable3:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -500,8 +493,13 @@ Resources:
               - elasticfilesystem:ClientRootAccess
               - elasticfilesystem:ClientWrite
             Principal:
-                AWS: !GetAtt ECSTaskRole.Arn
-      ProvisionedThroughputInMibps: !If [ IsProvisioned, !Ref EfsProvisionedThroughputInMibps, !Ref 'AWS::NoValue' ]
+              AWS: !GetAtt ECSTaskRole.Arn
+      ProvisionedThroughputInMibps:
+        !If [
+          IsProvisioned,
+          !Ref EfsProvisionedThroughputInMibps,
+          !Ref "AWS::NoValue",
+        ]
       ThroughputMode: !Ref ThroughputMode
       FileSystemTags:
         - Key: Name
@@ -510,90 +508,90 @@ Resources:
     Type: AWS::EFS::MountTarget
     Properties:
       FileSystemId: !Ref EFSFileSystem
-      SecurityGroups: [ !Ref EFSSecurityGroup ]
+      SecurityGroups: [!Ref EFSSecurityGroup]
       SubnetId: !Ref PrivateSubnet1
   MountTargetPrivateSubnet2:
     Type: AWS::EFS::MountTarget
     Properties:
       FileSystemId: !Ref EFSFileSystem
-      SecurityGroups: [ !Ref EFSSecurityGroup ]
+      SecurityGroups: [!Ref EFSSecurityGroup]
       SubnetId: !Ref PrivateSubnet2
   MountTargetPrivateSubnet3:
     Type: AWS::EFS::MountTarget
     Properties:
       FileSystemId: !Ref EFSFileSystem
-      SecurityGroups: [ !Ref EFSSecurityGroup ]
+      SecurityGroups: [!Ref EFSSecurityGroup]
       SubnetId: !Ref PrivateSubnet3
   AccessPointSites:
-      Type: 'AWS::EFS::AccessPoint'
-      Properties:
-        AccessPointTags: 
-          - Key: "Name"
-            Value: "sites"
-        FileSystemId: !Ref EFSFileSystem
-        PosixUser:
-          Uid: "33"
-          Gid: "33"
-        RootDirectory:
-          CreationInfo:
-            OwnerGid: "33"
-            OwnerUid: "33"
-            Permissions: "0755"
-          Path: "/sites"  
+    Type: "AWS::EFS::AccessPoint"
+    Properties:
+      AccessPointTags:
+        - Key: "Name"
+          Value: "sites"
+      FileSystemId: !Ref EFSFileSystem
+      PosixUser:
+        Uid: "33"
+        Gid: "33"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "33"
+          OwnerUid: "33"
+          Permissions: "0755"
+        Path: "/sites"
   AccessPointModules:
-      Type: 'AWS::EFS::AccessPoint'
-      Properties:
-        AccessPointTags: 
-          - Key: "Name"
-            Value: "modules"    
-        FileSystemId: !Ref EFSFileSystem
-        PosixUser:
-          Uid: "33"
-          Gid: "33"
-        RootDirectory:
-          CreationInfo:
-            OwnerGid: "33"
-            OwnerUid: "33"
-            Permissions: "0755"
-          Path: "/modules"  
+    Type: "AWS::EFS::AccessPoint"
+    Properties:
+      AccessPointTags:
+        - Key: "Name"
+          Value: "modules"
+      FileSystemId: !Ref EFSFileSystem
+      PosixUser:
+        Uid: "33"
+        Gid: "33"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "33"
+          OwnerUid: "33"
+          Permissions: "0755"
+        Path: "/modules"
   AccessPointThemes:
-      Type: 'AWS::EFS::AccessPoint'
-      Properties:
-        AccessPointTags: 
-          - Key: "Name"
-            Value: "themes"   
-        FileSystemId: !Ref EFSFileSystem
-        PosixUser:
-          Uid: "33"
-          Gid: "33"
-        RootDirectory:
-          CreationInfo:
-            OwnerGid: "33"
-            OwnerUid: "33"
-            Permissions: "0755"
-          Path: "/themes"  
+    Type: "AWS::EFS::AccessPoint"
+    Properties:
+      AccessPointTags:
+        - Key: "Name"
+          Value: "themes"
+      FileSystemId: !Ref EFSFileSystem
+      PosixUser:
+        Uid: "33"
+        Gid: "33"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "33"
+          OwnerUid: "33"
+          Permissions: "0755"
+        Path: "/themes"
   AccessPointProfiles:
-      Type: 'AWS::EFS::AccessPoint'
-      Properties:
-        AccessPointTags: 
-          - Key: "Name"
-            Value: "profiles"     
-        FileSystemId: !Ref EFSFileSystem
-        PosixUser:
-          Uid: "33"
-          Gid: "33"        
-        RootDirectory:
-          CreationInfo:
-            OwnerGid: "33"
-            OwnerUid: "33"
-            Permissions: "0755"
-          Path: "/profiles"   
-                                       
+    Type: "AWS::EFS::AccessPoint"
+    Properties:
+      AccessPointTags:
+        - Key: "Name"
+          Value: "profiles"
+      FileSystemId: !Ref EFSFileSystem
+      PosixUser:
+        Uid: "33"
+        Gid: "33"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "33"
+          OwnerUid: "33"
+          Permissions: "0755"
+        Path: "/profiles"
+
   #ECS Resources
   cluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Join ['-', [!Ref ClusterName, Cluster]] 
+      ClusterName: !Join ["-", [!Ref ClusterName, Cluster]]
       ClusterSettings:
         - Name: containerInsights
           Value: enabled
@@ -607,10 +605,10 @@ Resources:
           - Effect: Allow
             Principal:
               Service: ecs-tasks.amazonaws.com
-            Action: 'sts:AssumeRole'
+            Action: "sts:AssumeRole"
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
-        
+        - "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+
   ECSTaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -620,23 +618,22 @@ Resources:
           - Effect: Allow
             Principal:
               Service: ecs-tasks.amazonaws.com
-            Action: 'sts:AssumeRole'
+            Action: "sts:AssumeRole"
       Policies:
         - PolicyName: EFSAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
-                Action: 
-                 - elasticfilesystem:ClientMount
-                 - elasticfilesystem:ClientRootAccess                 
-                 - elasticfilesystem:ClientWrite
-                Resource: '*'
+                Action:
+                  - elasticfilesystem:ClientMount
+                  - elasticfilesystem:ClientRootAccess
+                  - elasticfilesystem:ClientWrite
+                Resource: "*"
                 Condition:
                   StringEquals:
-                    'aws:TagKeys/Name': !Ref ClusterName
-              
-      
+                    "aws:TagKeys/Name": !Ref ClusterName
+
   AutoScalingRole:
     Type: AWS::IAM::Role
     Properties:
@@ -646,16 +643,16 @@ Resources:
           - Effect: Allow
             Principal:
               Service: ecs-tasks.amazonaws.com
-            Action: 'sts:AssumeRole'
+            Action: "sts:AssumeRole"
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
+        - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole"
 
   AutoScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
       MinCapacity: !Ref MinCapacity
       MaxCapacity: !Ref MaxCapacity
-      ResourceId: !Join ['/', [service, !Ref cluster, !GetAtt service.Name]]
+      ResourceId: !Join ["/", [service, !Ref cluster, !GetAtt service.Name]]
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
       RoleARN: !GetAtt AutoScalingRole.Arn
@@ -663,7 +660,7 @@ Resources:
   AutoScalingPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: !Join ['', [!Ref ClusterName, AutoScalingPolicy]]
+      PolicyName: !Join ["", [!Ref ClusterName, AutoScalingPolicy]]
       PolicyType: TargetTrackingScaling
       ScalingTargetId: !Ref AutoScalingTarget
       TargetTrackingScalingPolicyConfiguration:
@@ -676,19 +673,19 @@ Resources:
 
   service:
     Type: AWS::ECS::Service
-    DependsOn: 
-    - listener
+    DependsOn:
+      - listener
     Properties:
-      ServiceName: !Join ['-',[!Ref ClusterName, service]]
+      ServiceName: !Join ["-", [!Ref ClusterName, service]]
       Cluster: !Ref cluster
       TaskDefinition: !Ref taskdefinition
       EnableExecuteCommand: true
       DeploymentConfiguration:
-          MinimumHealthyPercent: 100
-          MaximumPercent: 200
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
       DesiredCount: !Ref MinCapacity
       LaunchType: FARGATE
-      NetworkConfiguration: 
+      NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           Subnets:
@@ -701,16 +698,16 @@ Resources:
         - ContainerName: "drupal"
           ContainerPort: 80
           TargetGroupArn: !Ref targetgroup
-    
+
   targetgroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     DependsOn: loadbalancer
     Properties:
       TargetGroupAttributes:
-      - Key: stickiness.enabled
-        Value: "true"
-      - Key: stickiness.type
-        Value: lb_cookie 
+        - Key: stickiness.enabled
+          Value: "true"
+        - Key: stickiness.type
+          Value: lb_cookie
       HealthCheckIntervalSeconds: 60
       HealthCheckPath: /
       HealthCheckTimeoutSeconds: 30
@@ -718,7 +715,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: "200,302"
-      Name: !Join ['-', [!Ref ClusterName, TargetGroup]]
+      Name: !Join ["-", [!Ref ClusterName, TargetGroup]]
       Port: 80
       Protocol: HTTP
       TargetType: ip
@@ -734,58 +731,56 @@ Resources:
       Protocol: HTTP
 
   loadbalancerLogBucket:
-    Type: 'AWS::S3::Bucket'
+    Type: "AWS::S3::Bucket"
     Properties:
       BucketName: !Join
-        - '-'
+        - "-"
         - - !Ref ClusterName
-          - 'loadbalancer'
-          - 'logs'
-          - !Ref 'AWS::AccountId'
-          - !Ref 'AWS::Region'
+          - "loadbalancer"
+          - "logs"
+          - !Ref "AWS::AccountId"
+          - !Ref "AWS::Region"
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-  
+
   loadbalancerLogBucketPolicy:
-    Type: 'AWS::S3::BucketPolicy'
+    Type: "AWS::S3::BucketPolicy"
     Properties:
       Bucket: !Ref loadbalancerLogBucket
       PolicyDocument:
         Statement:
-          - Action: 's3:PutObject'
-            Effect: 'Allow'
+          - Action: "s3:PutObject"
+            Effect: "Allow"
             Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
+              - ""
+              - - "arn:aws:s3:::"
                 - !Ref loadbalancerLogBucket
                 - /*
-            Principal: 
+            Principal:
               AWS: !Join
-                - ''
-                - - 'arn:aws:iam::'
+                - ""
+                - - "arn:aws:iam::"
                   - !FindInMap [RegionMap, !Ref "AWS::Region", elbAcc]
-                  - ':root'
-          - Action: 's3:PutObject'
-            Effect: 'Allow'
+                  - ":root"
+          - Action: "s3:PutObject"
+            Effect: "Allow"
             Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
+              - ""
+              - - "arn:aws:s3:::"
                 - !Ref loadbalancerLogBucket
                 - /*
             Principal:
               Service: delivery.logs.amazonaws.com
-          - Action: 's3:GetBucketAcl'
-            Effect: 'Allow'
+          - Action: "s3:GetBucketAcl"
+            Effect: "Allow"
             Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
+              - ""
+              - - "arn:aws:s3:::"
                 - !Ref loadbalancerLogBucket
             Principal:
               Service: delivery.logs.amazonaws.com
-              
-
 
   loadbalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -807,7 +802,7 @@ Resources:
   containersecuritygroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: !Join ['-', [!Ref ClusterName, ContainerSecurityGroup]]
+      GroupDescription: !Join ["-", [!Ref ClusterName, ContainerSecurityGroup]]
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -821,33 +816,31 @@ Resources:
           FromPort: 443
           ToPort: 443
           Description: "Container security group Egress rule"
-  
+
   containersecuritygroupEgressRuleEFS:
     Type: AWS::EC2::SecurityGroupEgress
-    Properties: 
+    Properties:
       CidrIp: !Ref VpcCIDR
-      Description: Container security group egress rule to access the EFS resources. 
+      Description: Container security group egress rule to access the EFS resources.
       FromPort: 2049
       IpProtocol: tcp
       ToPort: 2049
       GroupId: !Ref containersecuritygroup
   containersecuritygroupEgressRuleAurora:
     Type: AWS::EC2::SecurityGroupEgress
-    Properties: 
+    Properties:
       CidrIp: !Ref VpcCIDR
-      Description: Container security group egress rule to access the EFS resources. 
+      Description: Container security group egress rule to access the EFS resources.
       FromPort: 3306
       IpProtocol: tcp
       ToPort: 3306
       GroupId: !Ref containersecuritygroup
 
-
-
-
   albsecuritygroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: !Join ['-', [!Ref ClusterName, LoadBalancerSecurityGroup]]
+      GroupDescription:
+        !Join ["-", [!Ref ClusterName, LoadBalancerSecurityGroup]]
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -864,42 +857,42 @@ Resources:
 
   loggroupKmskey:
     Type: AWS::KMS::Key
-    Properties: 
+    Properties:
       Description: KMS key to encrypt the CloudWatch LogGroup
       Enabled: true
       EnableKeyRotation: true
       KeyPolicy:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Id: key-default-1
         Statement:
-        - Sid: Enable IAM User Permissions
-          Effect: Allow
-          Principal:
-            AWS: !Join ['',['arn:aws:iam::',!Ref AWS::AccountId,':root']]
-          Action: kms:*
-          Resource: '*'
-        - Sid: Enabled CloudWatch to access KMS
-          Effect: Allow
-          Principal:
-            Service: !Join ['',['logs.',!Ref AWS::Region,'.amazonaws.com']]
-          Action:
-            - kms:Encrypt*
-            - kms:Decrypt*
-            - kms:ReEncrypt*
-            - kms:GenerateDataKey*
-            - kms:Describe*
-          Resource: '*'
-        - Sid: Allow ELB logs to be sent to S3
-          Effect: Allow
-          Principal:
-            Service: delivery.logs.amazonaws.com
-          Action:
-            - kms:Encrypt*
-            - kms:Decrypt*
-            - kms:ReEncrypt*
-            - kms:GenerateDataKey*
-            - kms:Describe*
-          Resource: '*'
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Join ["", ["arn:aws:iam::", !Ref AWS::AccountId, ":root"]]
+            Action: kms:*
+            Resource: "*"
+          - Sid: Enabled CloudWatch to access KMS
+            Effect: Allow
+            Principal:
+              Service: !Join ["", ["logs.", !Ref AWS::Region, ".amazonaws.com"]]
+            Action:
+              - kms:Encrypt*
+              - kms:Decrypt*
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:Describe*
+            Resource: "*"
+          - Sid: Allow ELB logs to be sent to S3
+            Effect: Allow
+            Principal:
+              Service: delivery.logs.amazonaws.com
+            Action:
+              - kms:Encrypt*
+              - kms:Decrypt*
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:Describe*
+            Resource: "*"
 
       #KeySpec: String
       #KeyUsage: String
@@ -908,22 +901,21 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Join ['', [/ecs/, !Ref ClusterName, taskdefinition]]
+      LogGroupName: !Join ["", [/ecs/, !Ref ClusterName, taskdefinition]]
       RetentionInDays: 30
       KmsKeyId: !GetAtt loggroupKmskey.Arn
 
-  taskdefinition: 
+  taskdefinition:
     Type: AWS::ECS::TaskDefinition
-    Properties: 
+    Properties:
       RequiresCompatibilities:
         - "EC2"
         - "FARGATE"
-      Family: !Join ["-",[!Ref ClusterName,td]]
+      Family: !Join ["-", [!Ref ClusterName, td]]
       ExecutionRoleArn: !GetAtt ExecutionRole.Arn
       TaskRoleArn: !GetAtt ECSTaskRole.Arn
       ContainerDefinitions:
-        -
-          EntryPoint:
+        - EntryPoint:
             - "sh"
             - "-c"
             - "cp -prR /var/www/html/sites/* /mnt"
@@ -936,37 +928,29 @@ Resources:
               awslogs-group: !Ref LogGroup
               awslogs-stream-prefix: ecs
           MountPoints:
-            - 
-              ContainerPath: "/mnt"
+            - ContainerPath: "/mnt"
               SourceVolume: "sites"
           Name: "initcontainer"
-        -
-          DependsOn:
-            -
-              Condition: "COMPLETE"
+        - DependsOn:
+            - Condition: "COMPLETE"
               ContainerName: "initcontainer"
           Essential: true
           Image: !Ref Image
           MountPoints:
-            -
-              ContainerPath: "/var/www/html/modules/"
+            - ContainerPath: "/var/www/html/modules/"
               SourceVolume: "modules"
-            
-            - 
-              ContainerPath: "/var/www/html/sites/"
+
+            - ContainerPath: "/var/www/html/sites/"
               SourceVolume: "sites"
 
-            - 
-              ContainerPath: "/var/www/html/profiles/"
+            - ContainerPath: "/var/www/html/profiles/"
               SourceVolume: "profiles"
 
-            - 
-              ContainerPath: "/var/www/html/themes/"
+            - ContainerPath: "/var/www/html/themes/"
               SourceVolume: "themes"
           Name: "drupal"
           PortMappings:
-            -
-              ContainerPort: 80
+            - ContainerPort: 80
               HostPort: 80
               Protocol: tcp
 
@@ -974,8 +958,7 @@ Resources:
       Memory: "1024"
       NetworkMode: awsvpc
       Volumes:
-        - 
-          Name: themes
+        - Name: themes
           EFSVolumeConfiguration:
             FilesystemId: !Ref EFSFileSystem
             AuthorizationConfig:
@@ -983,10 +966,8 @@ Resources:
               AccessPointId: !Ref AccessPointThemes
             TransitEncryption: ENABLED
             RootDirectory: "/"
-          
-        
-        -
-          Name: profiles
+
+        - Name: profiles
           EFSVolumeConfiguration:
             FilesystemId: !Ref EFSFileSystem
             AuthorizationConfig:
@@ -994,10 +975,8 @@ Resources:
               AccessPointId: !Ref AccessPointProfiles
             TransitEncryption: ENABLED
             RootDirectory: "/"
-          
 
-        -
-          EFSVolumeConfiguration:
+        - EFSVolumeConfiguration:
             FilesystemId: !Ref EFSFileSystem
             AuthorizationConfig:
               IAM: ENABLED
@@ -1006,8 +985,7 @@ Resources:
             RootDirectory: "/"
           Name: sites
 
-        -
-          EFSVolumeConfiguration:
+        - EFSVolumeConfiguration:
             FilesystemId: !Ref EFSFileSystem
             AuthorizationConfig:
               IAM: ENABLED
@@ -1016,14 +994,10 @@ Resources:
             RootDirectory: "/"
           Name: modules
 
-
 Outputs:
   ALBEndpoint:
     Description: "ALB endpoint"
-    Value: 
-      !GetAtt loadbalancer.DNSName
+    Value: !GetAtt loadbalancer.DNSName
   DBEndpoint:
     Description: "DB endpoint"
-    Value: 
-      !GetAtt DrupalDB.Endpoint.Address
-
+    Value: !GetAtt DrupalDB.Endpoint.Address
