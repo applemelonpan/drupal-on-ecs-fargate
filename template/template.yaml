@@ -448,17 +448,30 @@ Resources:
       DBClusterIdentifier: drupal-db-aurora-serverless
       DBSubnetGroupName: !Ref DrupalDBSubnetGroupName
       Engine: aurora-mysql
-      EngineMode: serverless
+      EngineMode: provisioned
       MasterUsername: !Ref DBAdminUsername
       MasterUserPassword: !Ref DBPassword
       StorageEncrypted: true
       VpcSecurityGroupIds:
         - !Ref DrupalDBSG
-      ScalingConfiguration:
-        AutoPause: true
+      ServerlessV2ScalingConfiguration:
         MinCapacity: !Ref MinimumAuroraCapacityUnit
         MaxCapacity: !Ref MaximumAuroraCapacityUnit
-        SecondsUntilAutoPause: 1000
+
+  AuroraServerlessV2Instance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref DrupalDB
+      DBInstanceClass: db.serverless
+      Engine: aurora-mysql
+
+  AuroraServerlessV2ReaderInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref DrupalDB
+      DBInstanceClass: db.serverless
+      Engine: aurora-mysql
+      PromotionTier: 15
 
   #EFS Resources
   EFSSecurityGroup:
@@ -633,6 +646,17 @@ Resources:
                 Condition:
                   StringEquals:
                     "aws:TagKeys/Name": !Ref ClusterName
+        - PolicyName: ECSAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssmmessages:CreateControlChannel
+                  - ssmmessages:CreateDataChannel
+                  - ssmmessages:OpenControlChannel
+                  - ssmmessages:OpenDataChannel
+                Resource: "*"
 
   AutoScalingRole:
     Type: AWS::IAM::Role
@@ -816,6 +840,11 @@ Resources:
           FromPort: 443
           ToPort: 443
           Description: "Container security group Egress rule"
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          Description: "Container security group Egress rule"
 
   containersecuritygroupEgressRuleEFS:
     Type: AWS::EC2::SecurityGroupEgress
@@ -966,7 +995,6 @@ Resources:
               AccessPointId: !Ref AccessPointThemes
             TransitEncryption: ENABLED
             RootDirectory: "/"
-
         - Name: profiles
           EFSVolumeConfiguration:
             FilesystemId: !Ref EFSFileSystem
@@ -975,24 +1003,22 @@ Resources:
               AccessPointId: !Ref AccessPointProfiles
             TransitEncryption: ENABLED
             RootDirectory: "/"
-
-        - EFSVolumeConfiguration:
+        - Name: sites
+          EFSVolumeConfiguration:
             FilesystemId: !Ref EFSFileSystem
             AuthorizationConfig:
               IAM: ENABLED
               AccessPointId: !Ref AccessPointSites
             TransitEncryption: ENABLED
             RootDirectory: "/"
-          Name: sites
-
-        - EFSVolumeConfiguration:
+        - Name: modules
+          EFSVolumeConfiguration:
             FilesystemId: !Ref EFSFileSystem
             AuthorizationConfig:
               IAM: ENABLED
               AccessPointId: !Ref AccessPointModules
             TransitEncryption: ENABLED
             RootDirectory: "/"
-          Name: modules
 
 Outputs:
   ALBEndpoint:
