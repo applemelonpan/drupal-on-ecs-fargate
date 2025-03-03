@@ -646,6 +646,17 @@ Resources:
                 Condition:
                   StringEquals:
                     "aws:TagKeys/Name": !Ref ClusterName
+        - PolicyName: ECSAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssmmessages:CreateControlChannel
+                  - ssmmessages:CreateDataChannel
+                  - ssmmessages:OpenControlChannel
+                  - ssmmessages:OpenDataChannel
+                Resource: "*"
 
   AutoScalingRole:
     Type: AWS::IAM::Role
@@ -829,6 +840,11 @@ Resources:
           FromPort: 443
           ToPort: 443
           Description: "Container security group Egress rule"
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          Description: "Container security group Egress rule"
 
   containersecuritygroupEgressRuleEFS:
     Type: AWS::EC2::SecurityGroupEgress
@@ -932,6 +948,9 @@ Resources:
             - "sh"
             - "-c"
             - "cp -prR /var/www/html/sites/* /mnt"
+            - "cd /opt/drupal"
+            - "composer require drush/drush"
+            - "drush cache-rebuild"
           Essential: false
           Image: !Ref Image
           LogConfiguration:
@@ -979,7 +998,6 @@ Resources:
               AccessPointId: !Ref AccessPointThemes
             TransitEncryption: ENABLED
             RootDirectory: "/"
-
         - Name: profiles
           EFSVolumeConfiguration:
             FilesystemId: !Ref EFSFileSystem
@@ -988,24 +1006,22 @@ Resources:
               AccessPointId: !Ref AccessPointProfiles
             TransitEncryption: ENABLED
             RootDirectory: "/"
-
-        - EFSVolumeConfiguration:
+        - Name: sites
+          EFSVolumeConfiguration:
             FilesystemId: !Ref EFSFileSystem
             AuthorizationConfig:
               IAM: ENABLED
               AccessPointId: !Ref AccessPointSites
             TransitEncryption: ENABLED
             RootDirectory: "/"
-          Name: sites
-
-        - EFSVolumeConfiguration:
+        - Name: modules
+          EFSVolumeConfiguration:
             FilesystemId: !Ref EFSFileSystem
             AuthorizationConfig:
               IAM: ENABLED
               AccessPointId: !Ref AccessPointModules
             TransitEncryption: ENABLED
             RootDirectory: "/"
-          Name: modules
 
 Outputs:
   ALBEndpoint:
